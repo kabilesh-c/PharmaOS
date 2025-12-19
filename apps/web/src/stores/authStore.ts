@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type UserRole = "ADMIN" | "MANAGER" | "PHARMACIST";
+export type UserRole = "ADMIN" | "MANAGER" | "PHARMACIST" | "PROCUREMENT";
 export type SystemMode = "RETAIL" | "HOSPITAL";
 
 interface User {
@@ -28,6 +28,7 @@ interface AuthState {
   isAdmin: () => boolean;
   isManager: () => boolean;
   isPharmacist: () => boolean;
+  isProcurement: () => boolean;
   canAccessPage: (page: string) => boolean;
   canPerformAction: (action: string) => boolean;
 }
@@ -78,6 +79,7 @@ export const useAuthStore = create<AuthState>()(
       isAdmin: () => get().user?.role === "ADMIN",
       isManager: () => get().user?.role === "MANAGER",
       isPharmacist: () => get().user?.role === "PHARMACIST",
+      isProcurement: () => get().user?.role === "PROCUREMENT",
 
       canAccessPage: (page) => {
         const user = get().user;
