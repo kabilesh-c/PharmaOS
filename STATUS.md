@@ -58,6 +58,19 @@ Pharmacist:
 3. **Dashboard**
    - Medicine Info card (dark with circular viz)
    - Active Salesman avatars
+
+4. **AI Features (Phase 2 Implemented)**:
+   - **Admin Dashboard**: Check "AI System Insights" card.
+   - **Manager Dashboard**: Check "AI Recommendation Summary".
+   - **Staff Dashboard**: Check "AI Request Suggestions".
+   - **Analytics**: Toggle "AI Insights" for deep-dive analysis.
+   - **Requests**: View "AI Analysis" column with risk flags.
+   - **New Request**: Try entering quantity > 500 to see AI validation.
+   - **Inventory**: Check AI badges (Expiry Risk, Demand Forecast).
+   - **Bulk Orders**: View "AI Procurement Insights" and suggested quantities.
+   - **Suppliers**: Check "AI Risk Assessment" on supplier cards.
+
+## Next Steps
    - Prescriptions card (bright yellow!)
    - Recent Orders with filters (ALL, OPD, IPD, OT)
    - Stock Alerts

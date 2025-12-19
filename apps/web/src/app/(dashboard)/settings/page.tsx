@@ -46,6 +46,14 @@ const rolePermissions: { [key in UserRole]: { page: string; access: boolean }[] 
     { page: "Automation", access: false },
     { page: "Settings", access: false },
   ],
+  PROCUREMENT: [
+    { page: "Dashboard", access: true },
+    { page: "POS", access: false },
+    { page: "Inventory", access: true },
+    { page: "Analytics", access: true },
+    { page: "Automation", access: false },
+    { page: "Settings", access: true },
+  ],
 };
 
 export default function SettingsPage() {
