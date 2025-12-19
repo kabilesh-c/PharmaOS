@@ -31,7 +31,7 @@ export default function RoleGuard({ children, allowedRoles, loadingColor = "bord
       if (user.role === "ADMIN") {
         router.push("/admin/dashboard");
       } else if (user.role === "MANAGER") {
-        router.push("/manager/dashboard");
+        router.push("/manager");
       } else if (user.role === "PHARMACIST") {
         router.push("/pharmacist/dashboard");
       } else {

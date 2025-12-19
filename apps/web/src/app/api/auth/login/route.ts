@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const mockUsers = [
-  { id: "1", email: "admin@pharmacy.com", password: "admin123", name: "Admin User", role: "ADMIN" },
-  { id: "2", email: "manager@pharmacy.com", password: "manager123", name: "Manager User", role: "MANAGER" },
-  { id: "3", email: "pharmacist@pharmacy.com", password: "pharmacist123", name: "Pharmacist User", role: "PHARMACIST" },
+  // Retail Users
+  { id: "1", email: "admin@pharmacy.com", password: "admin123", name: "Admin User", role: "ADMIN", mode: "RETAIL" },
+  { id: "2", email: "manager@pharmacy.com", password: "manager123", name: "Manager User", role: "MANAGER", mode: "RETAIL" },
+  { id: "3", email: "pharmacist@pharmacy.com", password: "pharmacist123", name: "Pharmacist User", role: "PHARMACIST", mode: "RETAIL" },
+  
+  // Hospital Users
+  { id: "4", email: "admin@hospital.com", password: "admin123", name: "Hospital Admin", role: "ADMIN", mode: "HOSPITAL" },
+  { id: "5", email: "manager@hospital.com", password: "manager123", name: "Pharmacy Manager", role: "MANAGER", mode: "HOSPITAL" },
+  { id: "6", email: "staff@hospital.com", password: "staff123", name: "Dept Staff", role: "PHARMACIST", mode: "HOSPITAL" },
 ];
 
 export async function POST(request: NextRequest) {
@@ -25,6 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       token,
       user: userWithoutPassword,
+      mode: user.mode || "RETAIL"
     });
   } catch (error) {
     return NextResponse.json(
