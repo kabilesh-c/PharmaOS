@@ -33,7 +33,7 @@ export default function ManagerTopBar() {
     // Mock results
     setSearchResults([
       { id: "1", type: "medicine", title: "Paracetamol", subtitle: "Stock: 500", href: "/manager/inventory" },
-      { id: "2", type: "order", title: "Order #1234", subtitle: "Pending Approval", href: "/manager/dashboard" },
+      { id: "2", type: "order", title: "Order #1234", subtitle: "Pending Approval", href: "/manager" },
     ]);
   }, [searchQuery]);
 

@@ -1,15 +1,15 @@
-"use client";
+﻿"use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Home, ShoppingCart, Package, BarChart3, Settings, Zap } from "lucide-react";
+import { Home, ShoppingCart, Package, BarChart3, Settings, Zap, Building2, Users, FileText, ClipboardList, Truck, History, PlusCircle, Receipt, Undo2 } from "lucide-react";
 import Sidebar, { NavItem } from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 import { useAuthStore, UserRole } from "@/stores/authStore";
 
 // Define page access by role
 const PAGE_ACCESS: Record<string, UserRole[]> = {
-  "/dashboard": ["ADMIN", "MANAGER", "PHARMACIST"],
+  "/dashboard": ["ADMIN", "MANAGER", "PHARMACIST", "PROCUREMENT"],
   "/pos": ["ADMIN", "MANAGER", "PHARMACIST"],
   "/inventory": ["ADMIN", "MANAGER", "PHARMACIST"],
   "/analytics": ["ADMIN", "MANAGER"],
@@ -17,13 +17,48 @@ const PAGE_ACCESS: Record<string, UserRole[]> = {
   "/settings": ["ADMIN", "MANAGER"],
 };
 
-const navItems: NavItem[] = [
+const retailNavItems: NavItem[] = [
   { icon: Home, href: "/dashboard", label: "Dashboard" },
   { icon: ShoppingCart, href: "/pos", label: "POS" },
   { icon: Package, href: "/inventory", label: "Inventory" },
   { icon: BarChart3, href: "/analytics", label: "Analytics" },
   { icon: Zap, href: "/automation", label: "Automation" },
   { icon: Settings, href: "/settings", label: "Settings" },
+];
+
+const hospitalAdminNavItems: NavItem[] = [
+  { icon: Home, href: "/admin", label: "Dashboard" },
+  { icon: Building2, href: "/admin/departments", label: "Departments" },
+  { icon: Users, href: "/admin/users", label: "Users" },
+  { icon: BarChart3, href: "/admin/analytics", label: "Analytics" },
+  { icon: FileText, href: "/admin/audit", label: "Audit Logs" },
+  { icon: Settings, href: "/admin/settings", label: "Settings" },
+];
+
+const hospitalManagerNavItems: NavItem[] = [
+  { icon: Home, href: "/manager", label: "Dashboard" },
+  { icon: ClipboardList, href: "/manager/requests", label: "Requests" },
+  { icon: Package, href: "/manager/inventory", label: "Inventory" },
+  { icon: Truck, href: "/manager/bulk-orders", label: "Bulk Orders" },
+  { icon: Users, href: "/manager/suppliers", label: "Suppliers" },
+  { icon: BarChart3, href: "/manager/analytics", label: "Analytics" },
+  { icon: Settings, href: "/manager/settings", label: "Settings" },
+];
+
+const hospitalStaffNavItems: NavItem[] = [
+  { icon: Home, href: "/hospital/staff", label: "Dashboard" },
+  { icon: PlusCircle, href: "/hospital/staff/request/new", label: "New Request" },
+  { icon: History, href: "/hospital/staff/requests", label: "History" },
+  { icon: Package, href: "/hospital/staff/inventory", label: "Inventory" },
+];
+
+const procurementNavItems: NavItem[] = [
+  { icon: Home, href: "/procurement", label: "Dashboard" },
+  { icon: FileText, href: "/procurement/orders", label: "Purchase Orders" },
+  { icon: Users, href: "/procurement/vendors", label: "Vendors" },
+  { icon: Truck, href: "/procurement/deliveries", label: "Deliveries" },
+  { icon: Receipt, href: "/procurement/invoices", label: "Invoices" },
+  { icon: Undo2, href: "/procurement/returns", label: "Returns" },
 ];
 
 export default function DashboardLayout({
@@ -33,61 +68,67 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, mode } = useAuthStore();
+  const [isChecking, setIsChecking] = useState(true);
+  const [currentNavItems, setCurrentNavItems] = useState<NavItem[]>(retailNavItems);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!isAuthenticated || !user) {
-      router.push("/login");
-      return;
-    }
+    const checkAuth = async () => {
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Check page access
-    const allowedRoles = PAGE_ACCESS[pathname];
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-      // Redirect to dashboard if not authorized for this page
-      router.push("/dashboard");
-    }
-  }, [isAuthenticated, user, pathname, router]);
+      if (!isAuthenticated || !user) {
+        router.replace("/login");
+        return;
+      }
+      
+      setIsChecking(false);
+    };
 
-  // Show nothing while checking auth
-  if (!isAuthenticated || !user) {
+    checkAuth();
+  }, [isAuthenticated, user, router, pathname]);
+
+  useEffect(() => {
+    if (user) {
+      if (mode === "HOSPITAL") {
+        switch (user.role) {
+          case "ADMIN":
+            setCurrentNavItems(hospitalAdminNavItems);
+            break;
+          case "MANAGER":
+            setCurrentNavItems(hospitalManagerNavItems);
+            break;
+          case "PHARMACIST":
+            setCurrentNavItems(hospitalStaffNavItems);
+            break;
+          case "PROCUREMENT":
+            setCurrentNavItems(procurementNavItems);
+            break;
+          default:
+            setCurrentNavItems(retailNavItems);
+        }
+      } else {
+        setCurrentNavItems(retailNavItems);
+      }
+    }
+  }, [user, mode]);
+
+  if (isChecking) {
     return (
-      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary-yellow border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-yellow"></div>
       </div>
     );
   }
-
-  // Check access for current page
-  const allowedRoles = PAGE_ACCESS[pathname];
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return (
-      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary-yellow border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Filter nav items based on role
-  const visibleNavItems = navItems.filter(item => {
-    // Simple logic: if role is pharmacist, hide analytics/automation/settings if they are not allowed
-    // But here we can just pass all and let the sidebar handle it? No, Sidebar doesn't filter anymore.
-    // So we filter here.
-    if (user.role === "PHARMACIST") {
-      return ["/dashboard", "/pos", "/inventory"].includes(item.href);
-    }
-    return true;
-  });
 
   return (
-    <div className="flex h-screen overflow-hidden bg-cream-100">
-      <Sidebar navItems={visibleNavItems} role={user.role} />
-      <TopBar />
-      <main className="flex-1 ml-24 pt-16 h-screen overflow-y-auto p-6">
-        {children}
-      </main>
+    <div className="flex min-h-screen bg-neutral-50">
+      <Sidebar navItems={currentNavItems} role={user?.role || "PHARMACIST"} />
+      <div className="flex-1 flex flex-col min-w-0 ml-24">
+        <TopBar />
+        <main className="flex-1 p-8 overflow-auto pt-24">
+          {children}
+        </main>
+      </div>
     </div>
   );
-
 }
