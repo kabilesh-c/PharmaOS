@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { Shield, Check, X, AlertCircle } from "lucide-react";
 
 export default function PermissionPreviewMatrix() {
@@ -49,8 +50,8 @@ export default function PermissionPreviewMatrix() {
           </thead>
           <tbody className="divide-y divide-neutral-100">
             {permissions.map((category, i) => (
-              <>
-                <tr key={`cat-${i}`} className="bg-neutral-50/50">
+              <Fragment key={i}>
+                <tr className="bg-neutral-50/50">
                   <td colSpan={4} className="py-2 px-2 font-semibold text-xs text-neutral-500 uppercase tracking-wider">
                     {category.category}
                   </td>
@@ -69,7 +70,7 @@ export default function PermissionPreviewMatrix() {
                     </td>
                   </tr>
                 ))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
