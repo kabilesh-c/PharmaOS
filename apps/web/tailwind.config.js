@@ -28,6 +28,17 @@ module.exports = {
           green: '#4ADE80',
           'green-dark': '#22C55E',
           'green-light': '#86EFAC',
+          // Landing Page Colors
+          teal: '#0D9488',       // Primary Brand
+          'teal-dark': '#115E59', // Headings
+          'teal-light': '#5EEAD4',
+          aqua: '#06B6D4',       // Gradient End
+          'aqua-light': '#67E8F9',
+          mint: '#F0FDFA',       // Backgrounds
+          // Hero Specific
+          'hero-start': '#3FB2A6',
+          'hero-end': '#5EDCD0',
+          'dashboard-sidebar': '#0F766E',
         },
         status: {
           danger: '#FF3D3D',
@@ -67,6 +78,16 @@ module.exports = {
       boxShadow: {
         card: '0 4px 12px rgba(0, 0, 0, 0.05)',
         'card-hover': '0 6px 16px rgba(0, 0, 0, 0.08)',
+      },
+      animation: {
+        marquee: 'marquee 40s linear infinite',
+        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
     },
   },
