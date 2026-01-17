@@ -1,6 +1,6 @@
 "use client";
 
-import { Pill, TrendingUp, Clock, Sparkles } from "lucide-react";
+import { Pill, TrendingUp, Clock, Sparkles, Plus } from "lucide-react";
 
 interface MedicineCardProps {
   medicine: {
@@ -10,11 +10,13 @@ interface MedicineCardProps {
     price: number;
     rack: string;
     stock: number;
+    image: string;
     demandHint?: "high" | "trending" | "seasonal" | null;
     demandReason?: string;
   };
   isSelected: boolean;
   onSelect: () => void;
+  onAdd: () => void;
 }
 
 const demandBadges = {
@@ -23,7 +25,7 @@ const demandBadges = {
   seasonal: { label: "Seasonal", icon: Clock, bg: "bg-status-warning/10", text: "text-status-warning" },
 };
 
-export default function MedicineCard({ medicine, isSelected, onSelect }: MedicineCardProps) {
+export default function MedicineCard({ medicine, isSelected, onSelect, onAdd }: MedicineCardProps) {
   const demandBadge = medicine.demandHint ? demandBadges[medicine.demandHint] : null;
   const DemandIcon = demandBadge?.icon;
 
@@ -31,13 +33,13 @@ export default function MedicineCard({ medicine, isSelected, onSelect }: Medicin
     <div
       onClick={onSelect}
       className={`
-        w-36 flex-shrink-0 bg-white rounded-card shadow-card p-4 cursor-pointer transition-all relative
+        w-36 flex-shrink-0 bg-white rounded-card shadow-card p-4 cursor-pointer transition-all relative group/card
         ${isSelected ? "ring-4 ring-primary-yellow" : "hover:shadow-card-hover"}
       `}
     >
       {/* Demand Hint Badge */}
       {demandBadge && DemandIcon && (
-        <div className="absolute -top-2 -right-2 group">
+        <div className="absolute -top-2 -right-2 group z-10">
           <span className={`flex items-center gap-1 px-2 py-0.5 ${demandBadge.bg} ${demandBadge.text} rounded-full text-[10px] font-bold shadow-sm cursor-help`}>
             <DemandIcon size={10} />
             {demandBadge.label}
@@ -51,8 +53,25 @@ export default function MedicineCard({ medicine, isSelected, onSelect }: Medicin
         </div>
       )}
 
-      <div className="w-full h-20 bg-neutral-100 rounded-button flex items-center justify-center mb-3">
-        <Pill size={32} className="text-neutral-400" />
+      <div className="w-full h-24 bg-neutral-100 rounded-button overflow-hidden mb-3 relative">
+        <img 
+          src={medicine.image} 
+          alt={medicine.name}
+          className="w-full h-full object-cover"
+        />
+        {/* Quick Add Overlay */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdd();
+            }}
+            className="bg-primary-yellow text-neutral-900 p-2 rounded-full hover:scale-110 transition-transform shadow-lg"
+            title="Add to Bill"
+          >
+            <Plus size={20} strokeWidth={3} />
+          </button>
+        </div>
       </div>
       
       <h4 className="text-sm font-semibold text-neutral-900 mb-1 line-clamp-2">{medicine.name}</h4>
@@ -73,11 +92,14 @@ export default function MedicineCard({ medicine, isSelected, onSelect }: Medicin
 
       {isSelected && (
         <div className="flex gap-2 mt-3">
-          <button className="flex-1 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-xs font-medium rounded-button transition-colors">
-            Change
-          </button>
-          <button className="flex-1 py-1.5 bg-primary-yellow/20 hover:bg-primary-yellow/30 text-xs font-medium rounded-button transition-colors text-primary-yellow-dark">
-            AI Alt
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdd();
+            }}
+            className="flex-1 py-1.5 bg-primary-yellow text-neutral-900 text-xs font-bold rounded-button hover:bg-primary-yellow-dark transition-colors"
+          >
+            Add to Bill
           </button>
         </div>
       )}
