@@ -15,33 +15,46 @@ export default function RoleGuard({ children, allowedRoles, loadingColor = "bord
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuthStore();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Wait for hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    // 1. Check Authentication
-    if (!isAuthenticated || !user) {
-      router.push("/login");
-      return;
-    }
-
-    // 2. Check Role Authorization
-    if (allowedRoles.includes(user.role)) {
-      setIsAuthorized(true);
-    } else {
-      // Redirect to appropriate portal based on role
-      if (user.role === "ADMIN") {
-        router.push("/admin/dashboard");
-      } else if (user.role === "MANAGER") {
-        router.push("/manager");
-      } else if (user.role === "PHARMACIST") {
-        router.push("/pharmacist/dashboard");
-      } else {
-        router.push("/login"); // Fallback
+    if (!mounted) return;
+    
+    // Give zustand time to hydrate from localStorage
+    const timer = setTimeout(() => {
+      // 1. Check Authentication
+      if (!isAuthenticated || !user) {
+        router.push("/login");
+        return;
       }
-    }
-  }, [isAuthenticated, user, allowedRoles, router, pathname]);
+
+      // 2. Check Role Authorization
+      if (allowedRoles.includes(user.role)) {
+        setIsAuthorized(true);
+      } else {
+        // Redirect to appropriate portal based on role
+        if (user.role === "ADMIN") {
+          router.push("/admin");
+        } else if (user.role === "MANAGER") {
+          router.push("/manager");
+        } else if (user.role === "PHARMACIST") {
+          router.push("/pos");
+        } else {
+          router.push("/login"); // Fallback
+        }
+      }
+    }, 150);
+    
+    return () => clearTimeout(timer);
+  }, [mounted, isAuthenticated, user, allowedRoles, router, pathname]);
 
   // Show loading state while checking
-  if (!isAuthenticated || !user || !isAuthorized) {
+  if (!mounted || !isAuthenticated || !user || !isAuthorized) {
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center">
         <div className={`w-12 h-12 border-4 ${loadingColor} border-t-transparent rounded-full animate-spin`} />
