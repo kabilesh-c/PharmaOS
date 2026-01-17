@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Facebook, Twitter, Instagram, Linkedin, Mail } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Github, Heart } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -71,10 +71,45 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-neutral-800 flex flex-col md:flex-row justify-between items-center gap-4">
           <p>© 2025 PharmaOS. All rights reserved.</p>
+          
+          {/* Made by section */}
+          <div className="flex flex-col items-center gap-3">
+            <p className="flex items-center gap-2 text-neutral-300">
+              Made with <Heart size={16} className="text-red-500 fill-red-500" /> by <span className="text-white font-semibold">Kabilesh C</span>
+            </p>
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://www.linkedin.com/in/kabilesh-c20" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-neutral-800 flex items-center justify-center hover:bg-[#0077B5] hover:text-white transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin size={16} />
+              </a>
+              <a 
+                href="https://github.com/kabilesh-c" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-neutral-800 flex items-center justify-center hover:bg-white hover:text-neutral-900 transition-colors"
+                aria-label="GitHub"
+              >
+                <Github size={16} />
+              </a>
+              <a 
+                href="mailto:kabileshc.dev@gmail.com"
+                className="w-9 h-9 rounded-full bg-neutral-800 flex items-center justify-center hover:bg-primary-teal hover:text-white transition-colors"
+                aria-label="Email"
+              >
+                <Mail size={16} />
+              </a>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <Mail size={16} />
-            <a href="mailto:support@pharmaos.com" className="hover:text-white transition-colors">
-              support@pharmaos.com
+            <a href="mailto:kabileshc.dev@gmail.com" className="hover:text-white transition-colors">
+              kabileshc.dev@gmail.com
             </a>
           </div>
         </div>
