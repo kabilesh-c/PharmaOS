@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
+import { authApi } from "@/lib/api";
 import { Check, Info, ArrowRight, Building2, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
@@ -24,41 +25,103 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
 
-    try {
-      // Mock Login Logic
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API
+    // --- DEMO MODE: Accept any password for demo emails ---
+    // This allows login even if the backend is down or database is empty
+    const demoUsers: Record<string, any> = {
+      // Retail Mode
+      "admin@pharmacy.com": { role: "ADMIN", name: "Retail Admin", mode: "RETAIL" },
+      "manager@pharmacy.com": { role: "MANAGER", name: "Retail Manager", mode: "RETAIL" },
+      "pharmacist@pharmacy.com": { role: "PHARMACIST", name: "Retail Pharmacist", mode: "RETAIL" },
+      // Hospital Mode
+      "admin@hospital.com": { role: "ADMIN", name: "Hospital Admin", mode: "HOSPITAL" },
+      "manager@hospital.com": { role: "MANAGER", name: "Hospital Manager", mode: "HOSPITAL" },
+      "staff@hospital.com": { role: "PHARMACIST", name: "Hospital Staff", mode: "HOSPITAL" },
+    };
 
-      // Determine user based on email (Mock)
-      let role = "PHARMACIST";
-      let mode: "RETAIL" | "HOSPITAL" = "RETAIL";
-      
-      if (email.includes("admin")) role = "ADMIN";
-      else if (email.includes("manager")) role = "MANAGER";
-      else if (email.includes("pharmacist") || email.includes("staff")) role = "PHARMACIST";
-
-      if (email.includes("hospital")) mode = "HOSPITAL";
+    const normalizedEmail = email.toLowerCase().trim();
+    const demoUser = demoUsers[normalizedEmail];
+    
+    // Demo mode: If email matches a demo user, accept ANY password
+    if (demoUser) {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const user = {
-        id: "user-123",
-        name: "Demo User",
-        email: email,
-        role: role as any,
+        id: "demo-" + Math.random().toString(36).substr(2, 9),
+        name: demoUser.name,
+        email: normalizedEmail,
+        role: demoUser.role,
+        organizationId: demoUser.mode === "HOSPITAL" ? "demo-hospital-org" : "demo-retail-org"
+      };
+
+      login(user, "demo-token-12345");
+      setMode(demoUser.mode);
+
+      // Wait for state to persist before navigating
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Redirect logic based on mode and role
+      let targetPath = "/dashboard";
+      
+      if (demoUser.mode === "HOSPITAL") {
+        switch (demoUser.role) {
+          case "ADMIN": targetPath = "/hospital/admin"; break;
+          case "MANAGER": targetPath = "/manager"; break;
+          default: targetPath = "/hospital/staff"; break;
+        }
+      } else {
+        // Retail mode
+        switch (demoUser.role) {
+          case "ADMIN": targetPath = "/admin"; break;
+          case "MANAGER": targetPath = "/manager"; break;
+          case "PHARMACIST": targetPath = "/pos"; break;
+          default: targetPath = "/dashboard"; break;
+        }
+      }
+      
+      setIsLoading(false);
+      router.push(targetPath);
+      return;
+    }
+    // ---------------------------------
+
+    try {
+      // Real API Login
+      const response = await authApi.login(email, password);
+      const { user: apiUser, token } = response;
+
+      // Determine mode based on organization type (if available) or email fallback
+      let mode: "RETAIL" | "HOSPITAL" = "RETAIL";
+      if (apiUser.organization?.type === "HOSPITAL" || email.includes("hospital")) {
+        mode = "HOSPITAL";
+      }
+
+      const user = {
+        id: apiUser.id,
+        name: `${apiUser.firstName} ${apiUser.lastName}`,
+        email: apiUser.email,
+        role: apiUser.role,
+        organizationId: apiUser.organizationId
       };
       
       // Use auth store to persist login
-      login(user, "mock-token");
+      login(user, token);
       setMode(mode);
       
       // Redirect based on role and mode
+      const role = apiUser.role;
       if (mode === "HOSPITAL") {
         switch (role) {
           case "ADMIN":
+          case "SUPER_ADMIN":
             router.push("/admin");
             break;
+          case "INVENTORY_MANAGER":
           case "MANAGER":
             router.push("/manager");
             break;
           case "PHARMACIST":
+          case "SALES_CLERK":
             router.push("/hospital/staff");
             break;
           default:
@@ -67,12 +130,15 @@ export default function LoginPage() {
       } else {
         switch (role) {
           case "ADMIN":
+          case "SUPER_ADMIN":
             router.push("/admin");
             break;
+          case "INVENTORY_MANAGER":
           case "MANAGER":
             router.push("/manager");
             break;
           case "PHARMACIST":
+          case "SALES_CLERK":
             router.push("/pharmacist/dashboard");
             break;
           default:
@@ -80,10 +146,59 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      setError(err.message);
+      // Silently handle error in demo mode
+      setError("Login failed. Please use one of the demo credentials below.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Quick login handler for one-click demo access
+  const handleQuickLogin = async (email: string, role: string, mode: "RETAIL" | "HOSPITAL") => {
+    setIsLoading(true);
+    
+    const names: Record<string, string> = {
+      "admin@pharmacy.com": "Retail Admin",
+      "manager@pharmacy.com": "Retail Manager", 
+      "pharmacist@pharmacy.com": "Retail Pharmacist",
+      "admin@hospital.com": "Hospital Admin",
+      "manager@hospital.com": "Hospital Manager",
+      "staff@hospital.com": "Hospital Staff"
+    };
+
+    const user = {
+      id: "demo-" + Math.random().toString(36).substr(2, 9),
+      name: names[email] || "Demo User",
+      email: email,
+      role: role,
+      organizationId: mode === "HOSPITAL" ? "demo-hospital-org" : "demo-retail-org"
+    };
+
+    login(user, "demo-token-12345");
+    setMode(mode);
+
+    // Small delay for state to persist
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    // Redirect based on mode and role
+    let targetPath = "/dashboard";
+    
+    if (mode === "HOSPITAL") {
+      switch (role) {
+        case "ADMIN": targetPath = "/hospital/admin"; break;
+        case "MANAGER": targetPath = "/manager"; break;
+        default: targetPath = "/hospital/staff"; break;
+      }
+    } else {
+      switch (role) {
+        case "ADMIN": targetPath = "/admin"; break;
+        case "MANAGER": targetPath = "/manager"; break;
+        case "PHARMACIST": targetPath = "/pos"; break;
+        default: targetPath = "/dashboard"; break;
+      }
+    }
+    
+    router.push(targetPath);
   };
 
   return (
@@ -212,27 +327,75 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-8 p-5 bg-neutral-50 rounded-xl border border-neutral-100">
-            <div className="flex items-center gap-2 text-neutral-500 mb-3">
-              <Info size={16} />
-              <span className="text-sm font-medium">Demo Credentials</span>
+          {/* One-Click Demo Login */}
+          <div className="mt-6 p-5 bg-gradient-to-br from-[#1A1F37] to-[#2D3555] rounded-2xl shadow-xl">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary-yellow/40"></div>
+              <span className="text-xs font-bold text-primary-yellow uppercase tracking-widest">Quick Demo Access</span>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary-yellow/40"></div>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm text-neutral-600 font-mono">
-              <div>
-                <p className="font-bold text-neutral-400 mb-1 text-xs uppercase">Retail Mode</p>
-                <p>admin@pharmacy.com</p>
-                <p>manager@pharmacy.com</p>
-                <p>pharmacist@pharmacy.com</p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {/* Retail Pharmacy */}
+              <div className="bg-white/5 backdrop-blur rounded-xl p-3 border border-white/10">
+                <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-primary-yellow rounded-full"></span>
+                  Retail Pharmacy
+                </h4>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("admin@pharmacy.com", "ADMIN", "RETAIL")}
+                    className="w-full py-2.5 px-4 bg-primary-yellow text-[#1A1F37] rounded-lg text-xs font-bold hover:bg-primary-yellow-dark hover:scale-[1.02] transition-all shadow-lg shadow-primary-yellow/20"
+                  >
+                    Admin Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("manager@pharmacy.com", "MANAGER", "RETAIL")}
+                    className="w-full py-2.5 px-4 bg-white/10 text-white border border-white/20 rounded-lg text-xs font-semibold hover:bg-primary-yellow hover:text-[#1A1F37] hover:border-primary-yellow transition-all"
+                  >
+                    Manager Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("pharmacist@pharmacy.com", "PHARMACIST", "RETAIL")}
+                    className="w-full py-2.5 px-4 bg-white/10 text-white border border-white/20 rounded-lg text-xs font-semibold hover:bg-primary-yellow hover:text-[#1A1F37] hover:border-primary-yellow transition-all"
+                  >
+                    Pharmacist POS
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-neutral-400 mb-1 text-xs uppercase">Hospital Mode</p>
-                <p>admin@hospital.com</p>
-                <p>manager@hospital.com</p>
-                <p>staff@hospital.com</p>
-              </div>
-              <div className="col-span-2 pt-2 border-t border-neutral-200 text-xs text-neutral-400">
-                Passwords: <span className="font-bold text-neutral-600">admin123</span>, <span className="font-bold text-neutral-600">manager123</span>, <span className="font-bold text-neutral-600">pharmacist123</span> (Retail), <span className="font-bold text-neutral-600">staff123</span> (Hospital)
+
+              {/* Hospital */}
+              <div className="bg-white/5 backdrop-blur rounded-xl p-3 border border-white/10">
+                <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-primary-yellow rounded-full"></span>
+                  Hospital
+                </h4>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("admin@hospital.com", "ADMIN", "HOSPITAL")}
+                    className="w-full py-2.5 px-4 bg-primary-yellow text-[#1A1F37] rounded-lg text-xs font-bold hover:bg-primary-yellow-dark hover:scale-[1.02] transition-all shadow-lg shadow-primary-yellow/20"
+                  >
+                    Admin Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("manager@hospital.com", "MANAGER", "HOSPITAL")}
+                    className="w-full py-2.5 px-4 bg-white/10 text-white border border-white/20 rounded-lg text-xs font-semibold hover:bg-primary-yellow hover:text-[#1A1F37] hover:border-primary-yellow transition-all"
+                  >
+                    Manager Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("staff@hospital.com", "PHARMACIST", "HOSPITAL")}
+                    className="w-full py-2.5 px-4 bg-white/10 text-white border border-white/20 rounded-lg text-xs font-semibold hover:bg-primary-yellow hover:text-[#1A1F37] hover:border-primary-yellow transition-all"
+                  >
+                    Staff Portal
+                  </button>
+                </div>
               </div>
             </div>
           </div>
