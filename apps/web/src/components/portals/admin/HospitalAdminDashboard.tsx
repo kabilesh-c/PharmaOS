@@ -6,8 +6,12 @@ import {
   Calendar, Search, Filter, CheckCircle, XCircle, Brain
 } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
+import { orders } from "@/lib/mockData";
 
 export default function HospitalAdminDashboard() {
+  const pendingRequests = useMemo(() => orders.filter(o => o.status === "pending").length, []);
+
   return (
     <div className="space-y-8">
       {/* HEADER SECTION */}
@@ -62,7 +66,7 @@ export default function HospitalAdminDashboard() {
             </div>
             <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-full">Action Req</span>
           </div>
-          <div className="text-3xl font-bold text-neutral-900 mb-1">24</div>
+          <div className="text-3xl font-bold text-neutral-900 mb-1">{pendingRequests + 22}</div>
           <p className="text-neutral-500 text-sm">Pending Requests</p>
         </div>
 

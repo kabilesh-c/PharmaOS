@@ -1,8 +1,44 @@
 "use client";
 
 import { DollarSign, ShoppingCart, TrendingUp, AlertCircle, Users, Package, Activity } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { medicines, orders } from "@/lib/mockData";
 
 export default function RetailAdminDashboard() {
+  const router = useRouter();
+
+  // Calculate stats from mock data
+  const stats = useMemo(() => {
+    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+    const totalOrders = orders.length;
+    
+    // Calculate profit
+    let totalProfit = 0;
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        const medicine = medicines.find(m => m.id === item.medicineId);
+        if (medicine) {
+          // Profit = Line Total - (Cost Price * Quantity)
+          totalProfit += (item.price - (medicine.costPrice * item.quantity));
+        }
+      });
+    });
+
+    const lowStockCount = medicines.filter(m => m.stockStatus === "low-stock" || m.stockStatus === "out-of-stock").length;
+    const totalProducts = medicines.length;
+
+    return {
+      totalRevenue,
+      totalOrders,
+      totalProfit,
+      lowStockCount,
+      totalProducts
+    };
+  }, []);
+
+  const recentOrders = orders.slice(0, 5);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -21,7 +57,7 @@ export default function RetailAdminDashboard() {
             </div>
             <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">+12%</span>
           </div>
-          <div className="text-3xl font-bold text-neutral-900">$4,250</div>
+          <div className="text-3xl font-bold text-neutral-900">${stats.totalRevenue.toLocaleString()}</div>
           <div className="text-sm text-neutral-500">Total Revenue Today</div>
         </div>
 
@@ -33,7 +69,7 @@ export default function RetailAdminDashboard() {
             </div>
             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">+5%</span>
           </div>
-          <div className="text-3xl font-bold text-neutral-900">128</div>
+          <div className="text-3xl font-bold text-neutral-900">{stats.totalOrders}</div>
           <div className="text-sm text-neutral-500">Total Orders</div>
         </div>
 
@@ -44,7 +80,7 @@ export default function RetailAdminDashboard() {
               <TrendingUp size={20} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-neutral-900">$1,120</div>
+          <div className="text-3xl font-bold text-neutral-900">${stats.totalProfit.toLocaleString()}</div>
           <div className="text-sm text-neutral-800">Net Profit Today</div>
         </div>
 
@@ -56,7 +92,7 @@ export default function RetailAdminDashboard() {
             </div>
             <span className="text-xs font-bold text-red-400 bg-red-400/10 px-2 py-1 rounded">Action Needed</span>
           </div>
-          <div className="text-3xl font-bold">5</div>
+          <div className="text-3xl font-bold">{stats.lowStockCount}</div>
           <div className="text-sm text-neutral-400">Low Stock Items</div>
         </div>
       </div>
@@ -66,21 +102,29 @@ export default function RetailAdminDashboard() {
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-neutral-900 text-lg">Recent Transactions</h3>
-            <button className="text-sm text-primary-yellow-dark font-bold hover:underline">View All</button>
+            <button 
+              onClick={() => router.push('/pos')}
+              className="text-sm text-primary-yellow-dark font-bold hover:underline"
+            >
+              View All
+            </button>
           </div>
           <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl">
+            {recentOrders.map((order) => (
+              <div key={order.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-neutral-400 border border-neutral-100">
                     <ShoppingCart size={16} />
                   </div>
                   <div>
-                    <p className="font-bold text-neutral-900 text-sm">Order #TRX-{202400 + i}</p>
-                    <p className="text-xs text-neutral-500">Just now</p>
+                    <p className="font-bold text-neutral-900 text-sm">Order #{order.id}</p>
+                    <p className="text-xs text-neutral-500">{order.customerName} • {order.items.length} items</p>
                   </div>
                 </div>
-                <span className="font-bold text-green-600">+$45.00</span>
+                <div className="text-right">
+                  <span className="font-bold text-green-600 block">+${order.total}</span>
+                  <span className="text-xs text-neutral-400">{order.date}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -94,14 +138,14 @@ export default function RetailAdminDashboard() {
                 <Users size={16} />
                 <span className="text-sm">Active Staff</span>
               </div>
-              <span className="font-bold text-neutral-900">8</span>
+              <span className="font-bold text-neutral-900">3</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-neutral-600">
                 <Package size={16} />
                 <span className="text-sm">Total Products</span>
               </div>
-              <span className="font-bold text-neutral-900">1,240</span>
+              <span className="font-bold text-neutral-900">{stats.totalProducts}</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-neutral-600">
