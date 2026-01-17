@@ -44,6 +44,10 @@ export const medicines: Medicine[] = [
   { id: "12", name: "Cetirizine 10mg", genericName: "Cetirizine", category: "Antihistamines", manufacturer: "UCB", batchNumber: "CTZ012", quantity: 90, unit: "tablets", costPrice: 22, sellingPrice: 30, expiryDate: "2026-02-28", minStockLevel: 40, stockStatus: "in-stock", rack: "L8" },
 ];
 
+export const addMockMedicine = (medicine: Medicine) => {
+  medicines.unshift(medicine);
+};
+
 // Mock Orders Data
 export const orders: Order[] = [
   { id: "ORD001", customerName: "John Doe", items: [{ medicineId: "1", quantity: 2, price: 50 }, { medicineId: "4", quantity: 1, price: 85 }], total: 135, status: "completed", date: "2025-01-18", paymentMethod: "Cash" },
