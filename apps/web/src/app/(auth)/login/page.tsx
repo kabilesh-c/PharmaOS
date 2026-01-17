@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     // --- DEMO MODE: Accept any password for demo emails ---
     // This allows login even if the backend is down or database is empty
-    const demoUsers: Record<string, any> = {
+    const demoUsers: Record<string, { role: "ADMIN" | "MANAGER" | "PHARMACIST"; name: string; mode: "RETAIL" | "HOSPITAL" }> = {
       // Retail Mode
       "admin@pharmacy.com": { role: "ADMIN", name: "Retail Admin", mode: "RETAIL" },
       "manager@pharmacy.com": { role: "MANAGER", name: "Retail Manager", mode: "RETAIL" },
@@ -154,7 +154,7 @@ export default function LoginPage() {
   };
 
   // Quick login handler for one-click demo access
-  const handleQuickLogin = async (email: string, role: string, mode: "RETAIL" | "HOSPITAL") => {
+  const handleQuickLogin = async (email: string, role: "ADMIN" | "MANAGER" | "PHARMACIST", mode: "RETAIL" | "HOSPITAL") => {
     setIsLoading(true);
     
     const names: Record<string, string> = {
