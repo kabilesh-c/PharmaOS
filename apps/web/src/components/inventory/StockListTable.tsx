@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Filter, ChevronDown, ChevronUp, Package, AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
-import { medicines, Medicine } from "@/lib/mockData";
+import { Medicine, medicines as mockMedicines } from "@/lib/mockData";
+import { inventoryApi, Product as ApiProduct } from "@/lib/api";
 
 type SortField = "name" | "quantity" | "price" | "expiryDate";
 type SortOrder = "asc" | "desc";
 
 interface StockListTableProps {
   searchQuery?: string;
+  refreshTrigger?: number;
 }
 
 // Helper to check if this is the earliest expiring batch for a medicine
@@ -28,22 +30,76 @@ const getEarliestExpiryBatches = (meds: Medicine[]) => {
   return new Set(Object.values(earliestByName));
 };
 
-export default function StockListTable({ searchQuery = "" }: StockListTableProps) {
+export default function StockListTable({ searchQuery = "", refreshTrigger = 0 }: StockListTableProps) {
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
   const [localSearch, setLocalSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        // Try to fetch from API first
+        const products = await inventoryApi.getAll();
+        
+        if (products && products.length > 0) {
+          const flattenedMedicines: Medicine[] = products.flatMap(p => 
+            p.inventories.map(inv => {
+              const expiryDate = new Date(inv.expiryDate);
+              const now = new Date();
+              const daysToExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+              
+              let stockStatus: "in-stock" | "low-stock" | "out-of-stock" | "expired" = "in-stock";
+              if (inv.quantity === 0) stockStatus = "out-of-stock";
+              else if (daysToExpiry < 0) stockStatus = "expired";
+              else if (inv.quantity < (inv.lowStockThreshold || 10)) stockStatus = "low-stock";
+
+              return {
+                id: inv.id,
+                name: p.name,
+                genericName: p.genericName || "",
+                category: p.category || "Uncategorized",
+                manufacturer: p.manufacturer || "Unknown",
+                batchNumber: inv.batchNumber,
+                quantity: inv.quantity,
+                unit: p.unit,
+                costPrice: inv.costPrice,
+                sellingPrice: inv.sellingPrice,
+                expiryDate: inv.expiryDate,
+                minStockLevel: inv.lowStockThreshold || 10,
+                stockStatus,
+                rack: inv.location || "N/A"
+              };
+            })
+          );
+          setMedicines(flattenedMedicines);
+        } else {
+          // Fallback to mock data if API returns empty
+          setMedicines([...mockMedicines]);
+        }
+      } catch (error: any) {
+        // Silently fall back to mock data (demo mode)
+        setMedicines([...mockMedicines]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventory();
+  }, [refreshTrigger]);
+
   const effectiveSearch = searchQuery || localSearch;
 
   const categories = useMemo(() => {
     const cats = new Set(medicines.map(m => m.category));
     return ["all", ...Array.from(cats)];
-  }, []);
+  }, [medicines]);
 
   // Get earliest expiry batches for FEFO highlighting
-  const earliestExpiryBatches = useMemo(() => getEarliestExpiryBatches(medicines), []);
+  const earliestExpiryBatches = useMemo(() => getEarliestExpiryBatches(medicines), [medicines]);
 
   const filteredAndSortedMedicines = useMemo(() => {
     let filtered = [...medicines];
@@ -90,7 +146,7 @@ export default function StockListTable({ searchQuery = "" }: StockListTableProps
     });
 
     return filtered;
-  }, [effectiveSearch, categoryFilter, statusFilter, sortField, sortOrder]);
+  }, [medicines, effectiveSearch, categoryFilter, statusFilter, sortField, sortOrder]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
