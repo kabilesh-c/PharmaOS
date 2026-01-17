@@ -6,6 +6,7 @@ import { Store, Building2, ArrowRight, Check, User, MapPin, Users, Building } fr
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
+import { authApi } from "@/lib/api";
 
 type Step = "mode" | "org" | "admin" | "invite";
 type Mode = "retail" | "hospital" | null;
@@ -28,6 +29,10 @@ export default function OnboardingForm() {
     phone: "",
     password: "",
   });
+  const [createdUser, setCreatedUser] = useState<any>(null);
+  const [createdToken, setCreatedToken] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleModeSelect = (selectedMode: Mode) => {
     setMode(selectedMode);
@@ -39,9 +44,26 @@ export default function OnboardingForm() {
     setStep("admin");
   };
 
-  const handleAdminSubmit = (e: React.FormEvent) => {
+  const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically call an API to create the org and admin
+    setIsLoading(true);
+    setError("");
+
+    // Demo mode: Skip API call and directly proceed to success step
+    // This simulates a successful registration without requiring backend
+    const mockUser = {
+      id: "demo-" + Date.now(),
+      name: formData.adminName,
+      email: formData.email,
+      role: "ADMIN",
+      orgName: formData.orgName,
+      mode: mode === "hospital" ? "HOSPITAL" : "RETAIL"
+    };
+    const mockToken = "demo-token-" + Date.now();
+
+    setCreatedUser(mockUser);
+    setCreatedToken(mockToken);
+    setIsLoading(false);
     setStep("invite");
   };
 
