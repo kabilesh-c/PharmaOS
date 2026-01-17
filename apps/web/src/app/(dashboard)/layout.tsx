@@ -26,6 +26,24 @@ const retailNavItems: NavItem[] = [
   { icon: Settings, href: "/settings", label: "Settings" },
 ];
 
+const retailAdminNavItems: NavItem[] = [
+  { icon: Home, href: "/admin", label: "Dashboard" },
+  { icon: ShoppingCart, href: "/pos", label: "POS" },
+  { icon: Package, href: "/inventory", label: "Inventory" },
+  { icon: BarChart3, href: "/analytics", label: "Analytics" },
+  { icon: Zap, href: "/automation", label: "Automation" },
+  { icon: Settings, href: "/settings", label: "Settings" },
+];
+
+const retailManagerNavItems: NavItem[] = [
+  { icon: Home, href: "/manager", label: "Dashboard" },
+  { icon: ShoppingCart, href: "/pos", label: "POS" },
+  { icon: Package, href: "/inventory", label: "Inventory" },
+  { icon: BarChart3, href: "/analytics", label: "Analytics" },
+  { icon: Zap, href: "/automation", label: "Automation" },
+  { icon: Settings, href: "/settings", label: "Settings" },
+];
+
 const hospitalAdminNavItems: NavItem[] = [
   { icon: Home, href: "/admin", label: "Dashboard" },
   { icon: Building2, href: "/admin/departments", label: "Departments" },
@@ -70,11 +88,20 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { user, isAuthenticated, mode } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [currentNavItems, setCurrentNavItems] = useState<NavItem[]>(retailNavItems);
 
+  // Wait for hydration
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     const checkAuth = async () => {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Give zustand time to hydrate from localStorage
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       if (!isAuthenticated || !user) {
         router.replace("/login");
@@ -85,7 +112,7 @@ export default function DashboardLayout({
     };
 
     checkAuth();
-  }, [isAuthenticated, user, router, pathname]);
+  }, [mounted, isAuthenticated, user, router, pathname]);
 
   useEffect(() => {
     if (user) {
@@ -107,7 +134,16 @@ export default function DashboardLayout({
             setCurrentNavItems(retailNavItems);
         }
       } else {
-        setCurrentNavItems(retailNavItems);
+        switch (user.role) {
+          case "ADMIN":
+            setCurrentNavItems(retailAdminNavItems);
+            break;
+          case "MANAGER":
+            setCurrentNavItems(retailManagerNavItems);
+            break;
+          default:
+            setCurrentNavItems(retailNavItems);
+        }
       }
     }
   }, [user, mode]);
