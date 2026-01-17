@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Store, ArrowRight, UserPlus } from "lucide-react";
+import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function SignupPage() {
@@ -25,22 +26,21 @@ export default function SignupPage() {
     setError("");
 
     try {
-      // Mock Signup Logic
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API
-
       // Determine mode based on selection
       const mode = formData.mode;
 
-      // Mock User
-      const user = {
-        id: Math.random().toString(36).substr(2, 9),
+      // Call API
+      const { user, token } = await authApi.register({
         name: formData.name,
         email: formData.email,
+        password: formData.password,
         role: formData.role as any,
-      };
+        orgCode: formData.orgCode,
+        mode: mode
+      });
 
       // Login and set mode
-      login(user, "mock-token");
+      login(user, token);
       setMode(mode);
 
       // Redirect based on role and mode
@@ -74,9 +74,8 @@ export default function SignupPage() {
             router.push("/dashboard");
         }
       }
-      // No need to push to login, we are logged in now
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Registration failed");
     }
   };
 
