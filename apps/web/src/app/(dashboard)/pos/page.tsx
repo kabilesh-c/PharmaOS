@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus, Sparkles, ArrowRight, X } from "lucide-react";
 import ActiveOrdersBar from "@/components/pos/ActiveOrdersBar";
 import MedicineCard from "@/components/pos/MedicineCard";
-import BillingPanel from "@/components/pos/BillingPanel";
+import BillingPanel, { CartItem } from "@/components/pos/BillingPanel";
 
 interface Medicine {
   id: string;
@@ -13,16 +13,17 @@ interface Medicine {
   price: number;
   rack: string;
   stock: number;
+  image: string;
   demandHint?: "high" | "trending" | "seasonal" | null;
   demandReason?: string;
 }
 
 const mockMedicines: Medicine[] = [
-  { id: "1", name: "Paracetamol 500mg", dosage: "500mg Tablet", price: 25, rack: "A12", stock: 150, demandHint: "high", demandReason: "30% higher than usual this week" },
-  { id: "2", name: "Amoxicillin 250mg", dosage: "250mg Capsule", price: 120, rack: "B8", stock: 80, demandHint: null },
-  { id: "3", name: "Ibuprofen 400mg", dosage: "400mg Tablet", price: 45, rack: "C5", stock: 5, demandHint: "seasonal", demandReason: "Monsoon season demand spike" },
-  { id: "4", name: "Omeprazole 20mg", dosage: "20mg Capsule", price: 85, rack: "D3", stock: 60, demandHint: null },
-  { id: "5", name: "Atorvastatin 10mg", dosage: "10mg Tablet", price: 95, rack: "E7", stock: 120, demandHint: "trending", demandReason: "Health awareness campaign effect" },
+  { id: "1", name: "Paracetamol 500mg", dosage: "500mg Tablet", price: 25, rack: "A12", stock: 150, image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=200&h=200", demandHint: "high", demandReason: "30% higher than usual this week" },
+  { id: "2", name: "Amoxicillin 250mg", dosage: "250mg Capsule", price: 120, rack: "B8", stock: 80, image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=200&h=200", demandHint: null },
+  { id: "3", name: "Ibuprofen 400mg", dosage: "400mg Tablet", price: 45, rack: "C5", stock: 5, image: "https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&q=80&w=200&h=200", demandHint: "seasonal", demandReason: "Monsoon season demand spike" },
+  { id: "4", name: "Omeprazole 20mg", dosage: "20mg Capsule", price: 85, rack: "D3", stock: 60, image: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?auto=format&fit=crop&q=80&w=200&h=200", demandHint: null },
+  { id: "5", name: "Atorvastatin 10mg", dosage: "10mg Tablet", price: 95, rack: "E7", stock: 120, image: "https://images.unsplash.com/photo-1628771065518-0d82f1938462?auto=format&fit=crop&q=80&w=200&h=200", demandHint: "trending", demandReason: "Health awareness campaign effect" },
 ];
 
 interface SubstituteSuggestion {
@@ -35,6 +36,7 @@ interface SubstituteSuggestion {
 export default function POSPage() {
   const [selectedMedicine, setSelectedMedicine] = useState<string | null>(null);
   const [showSubstituteBanner, setShowSubstituteBanner] = useState(true);
+  const [cart, setCart] = useState<CartItem[]>([]);
 
   // Mock AI substitute suggestion
   const substituteSuggestion: SubstituteSuggestion | null = selectedMedicine === "3" ? {
@@ -43,6 +45,43 @@ export default function POSPage() {
     reason: "Same composition, better stock availability",
     savings: 15,
   } : null;
+
+  const addToCart = (medicine: Medicine) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === medicine.id);
+      if (existing) {
+        return prev.map(item => 
+          item.id === medicine.id 
+            ? { ...item, quantity: item.quantity + 1, total: item.unitPrice * (item.quantity + 1) }
+            : item
+        );
+      }
+      return [...prev, {
+        id: medicine.id,
+        name: medicine.name,
+        dosage: medicine.dosage,
+        quantity: 1,
+        unitPrice: medicine.price,
+        total: medicine.price
+      }];
+    });
+  };
+
+  const updateQuantity = (id: string, delta: number) => {
+    setCart(prev => prev.map(item => 
+      item.id === id 
+        ? { ...item, quantity: Math.max(1, item.quantity + delta), total: item.unitPrice * Math.max(1, item.quantity + delta) }
+        : item
+    ));
+  };
+
+  const removeItem = (id: string) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
 
   return (
     <div className="h-[calc(100vh-4rem)] p-8 flex gap-6">
@@ -99,6 +138,7 @@ export default function POSPage() {
                   setSelectedMedicine(medicine.id);
                   setShowSubstituteBanner(true);
                 }}
+                onAdd={() => addToCart(medicine)}
               />
             ))}
             
@@ -113,7 +153,12 @@ export default function POSPage() {
       </div>
 
       <div className="w-96 flex-shrink-0">
-        <BillingPanel />
+        <BillingPanel 
+          cart={cart}
+          onUpdateQuantity={updateQuantity}
+          onRemoveItem={removeItem}
+          onClearCart={clearCart}
+        />
       </div>
     </div>
   );
