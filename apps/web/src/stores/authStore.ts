@@ -11,6 +11,7 @@ interface User {
   email: string;
   name: string;
   role: UserRole;
+  organizationId?: string;
 }
 
 interface AuthState {
@@ -65,10 +66,12 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: (user, token) => {
+        localStorage.setItem('token', token);
         set({ user, token, isAuthenticated: true });
       },
 
       logout: () => {
+        localStorage.removeItem('token');
         set({ user: null, token: null, isAuthenticated: false });
       },
 
