@@ -1,4 +1,4 @@
-# Pharmacy Operations Platform - Phase 1
+# Pharmacy Operations Platform 
 
 A modern, role-based pharmacy operations web application built with Next.js, TypeScript, and Tailwind CSS.
 
@@ -115,7 +115,7 @@ Pharmacy-VS/
 │   │   │   │   └── pos/            # POS components
 │   │   │   └── styles/
 │   │   └── package.json
-│   └── api/               # Express API (ready for Phase 2)
+│   └── api/               # Express API
 │       ├── src/
 │       └── package.json
 ├── design.md              # Design specifications
@@ -143,19 +143,10 @@ Pharmacy-VS/
 - Border Radius: 12-16px
 - Shadows: Subtle (0 4px 12px rgba(0,0,0,0.05))
 - Spacing: Consistent 4px/8px grid
-
-## 🚧 Next Steps (Phase 2+)
-
-- [ ] Connect to real PostgreSQL database
-- [ ] Implement full API endpoints
-- [ ] Add real-time inventory updates
-- [ ] Implement search functionality
-- [ ] Add inventory management features
-- [ ] Build analytics and reporting
-- [ ] Implement automation and AI features
-- [ ] Add WhatsApp integration
-- [ ] Hospital mode with OPD/IPD/OT workflows
-- [ ] Role-based permissions management
+  
+## 👤 Author
+**Kabilesh C**
+📧 [kabileshc.dev@gmail.com](mailto:kabileshc.dev@gmail.com)
 
 ## 📝 License
 
