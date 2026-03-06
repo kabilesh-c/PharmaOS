@@ -2,7 +2,7 @@
 
 A modern, role-based pharmacy operations web application built with Next.js, TypeScript, and Tailwind CSS.
 
-## 🚀 Features Implemented (Phase 1)
+## 🚀 Features Implemented
 
 ### ✅ Authentication & Authorization
 - Landing page with navigation
